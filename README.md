@@ -1,0 +1,1 @@
+Game 2D Rainbow Riddle adalah permainan  yang menggabungkan elemen logika dan pemecahan masalah sederhana. Dalam game ini, pemain dihadapkan dengan beberapa botol atau tabung transparan yang berisi cairan berwarna-warni. Tujuan permainan adalah menyortir cairan tersebut sehingga setiap botol hanya berisi satu warna.
