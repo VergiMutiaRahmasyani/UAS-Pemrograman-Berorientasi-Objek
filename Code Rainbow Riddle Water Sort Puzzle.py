@@ -157,6 +157,86 @@ class Game:
         self.lose = False
         self.score = 0
         self.message_played = False
+        
+    def display_message(self, text, y_offset):
+        # Menampilkan pesan di tengah layar
+        message = self.large_font.render(text, True, 'white')
+        self.screen.blit(message, (self.WIDTH // 2 - message.get_width() // 2, self.HEIGHT // 2 + y_offset))
+
+    def run(self):
+        # Menjalankan loop utama permainan
+        running = True
+        while running:
+            self.screen.fill('black')  # Membersihkan layar
+            self.timer.tick(self.fps)  # Menjaga kecepatan frame
+
+            if self.new_game:
+                self.tube_manager.generate_start()  # Membuat tata letak baru
+                self.new_game = False
+                self.score = 0
+                self.win = False
+                self.lose = False
+                self.message_played = False
+
+            tube_boxes = self.tube_manager.draw_tubes(self.screen, self.select_index)  # Menggambar tabung
+
+            if not self.win and not self.lose:
+                self.win = self.tube_manager.check_victory()  # Mengecek kemenangan
+                self.lose = self.tube_manager.check_loss() and not self.win  # Mengecek kekalahan
+
+            if self.win and not self.message_played:
+                self.sound_manager.play_win_sound()  # Memainkan suara kemenangan
+                self.message_played = True
+            elif self.lose and not self.message_played:
+                self.sound_manager.play_lose_sound()  # Memainkan suara kekalahan
+                self.message_played = True
+
+            if self.win:
+                self.display_message('Anda Menang!', -50)  # Pesan menang
+            elif self.lose:
+                self.display_message('Anda Kalah!', -50)  # Pesan kalah
+
+            # Menampilkan skor
+            score_text = self.font.render(f'Skor: {self.score}', True, 'white')
+            self.screen.blit(score_text, (10, 50))
+
+            # Menampilkan instruksi
+            restart_text = self.font.render('Spasi: Ulangi | Enter: Tata Letak Baru', True, 'white')
+            self.screen.blit(restart_text, (self.WIDTH // 2 - restart_text.get_width() // 2, 10))
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False  # Menghentikan permainan
+                elif event.type == pygame.KEYUP:
+                    if event.key == pygame.K_SPACE:
+                        self.tube_manager.reset()  # Mengulang permainan dengan tata letak yang sama
+                        self.lose = False
+                        self.win = False
+                        self.score = 0
+                        self.message_played = False
+                    elif event.key == pygame.K_RETURN:
+                        self.new_game = True  # Membuat tata letak baru
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    if not self.selected:
+                        for idx, rect in enumerate(tube_boxes):
+                            if rect.collidepoint(event.pos):
+                                self.selected = True  # Memilih tabung
+                                self.select_index = idx
+                    else:
+                        for idx, rect in enumerate(tube_boxes):
+                            if rect.collidepoint(event.pos):
+                                if self.tube_manager.calc_move(self.select_index, idx, self.sound_manager):
+                                    self.score += 10  # Menambah skor saat gerakan berhasil
+                                self.selected = False
+                                self.select_index = -1
+
+            pygame.display.flip()  # Memperbarui layar
+        pygame.quit()
+
+if __name__ == "__main__":
+    game = Game()
+    game.run()
+
 
 
 
