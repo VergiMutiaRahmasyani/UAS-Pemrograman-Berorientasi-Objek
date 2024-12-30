@@ -83,6 +83,80 @@ class TubeManager:
                     pygame.draw.rect(screen, 'green',
                                      [offset + 5 + spacing * (i - start), y_start - 150, 65, 200], 3, 5)
                 tube_boxes.append(box)
+        
+        # Menggambar dua baris tabung
+        draw_single_row(0, 0, tubes_per_row, 300)
+        if self.tubes % 2 == 0:
+            draw_single_row(0, tubes_per_row, self.tubes, 650)
+        else:
+            draw_single_row(spacing * 0.5, tubes_per_row, self.tubes, 650)
+
+        return tube_boxes
+
+    def reset(self):
+        # Mereset warna tabung ke tata letak awal
+        self.tube_colors = copy.deepcopy(self.initial_colors)
+
+    def calc_move(self, selected_index, destination_index, sound_manager):
+        # Menghitung gerakan antara dua tabung
+        if len(self.tube_colors[selected_index]) > 0:
+            color_to_move = self.tube_colors[selected_index][-1]  # Warna di bagian atas tabung
+            if len(self.tube_colors[destination_index]) < 4 and \
+                    (len(self.tube_colors[destination_index]) == 0 or
+                     self.tube_colors[destination_index][-1] == color_to_move):
+                # Memindahkan warna selama syarat terpenuhi
+                while len(self.tube_colors[destination_index]) < 4 and \
+                        len(self.tube_colors[selected_index]) > 0 and \
+                        self.tube_colors[selected_index][-1] == color_to_move:
+                    self.tube_colors[destination_index].append(self.tube_colors[selected_index].pop())
+                sound_manager.play_move_sound()
+                return True
+        return False
+
+    def check_victory(self):
+        # Mengecek apakah semua tabung memiliki warna yang sama atau kosong
+        for tube in self.tube_colors:
+            if len(tube) > 0:
+                if len(tube) != 4 or len(set(tube)) > 1:
+                    return False
+        return True
+
+    def check_loss(self):
+        # Mengecek apakah tidak ada lagi gerakan yang mungkin dilakukan
+        for i in range(len(self.tube_colors)):
+            for j in range(len(self.tube_colors)):
+                if i != j and len(self.tube_colors[i]) > 0 and len(self.tube_colors[j]) < 4:
+                    if len(self.tube_colors[j]) == 0 or self.tube_colors[i][-1] == self.tube_colors[j][-1]:
+                        return False
+        return True
+
+
+class Game:
+    def __init__(self):
+        self.WIDTH = 900  # Lebar layar
+        self.HEIGHT = 1000  # Tinggi layar
+        self.screen = pygame.display.set_mode([self.WIDTH, self.HEIGHT])  # Membuat jendela layar
+        pygame.display.set_caption('Water Sort PyGame')  # Judul permainan
+        self.font = pygame.font.Font('freesansbold.ttf', 36)  # Font untuk skor
+        self.large_font = pygame.font.Font('freesansbold.ttf', 72)  # Font untuk pesan besar
+        self.fps = 60  # Kecepatan frame
+        self.timer = pygame.time.Clock()  # Pengatur waktu
+
+        # Warna-warna yang digunakan dalam permainan
+        color_choices = [(255, 0, 0), (255, 165, 0), (173, 216, 230), (0, 0, 255),
+                         (0, 100, 0), (255, 192, 203), (128, 0, 128), (169, 169, 169),
+                         (139, 69, 19), (144, 238, 144), (255, 255, 0), (255, 255, 255)]
+
+        self.sound_manager = SoundManager()  # Mengelola suara
+        self.tube_manager = TubeManager(color_choices, self.WIDTH)  # Mengelola tabung
+
+        self.new_game = True
+        self.selected = False
+        self.select_index = -1
+        self.win = False
+        self.lose = False
+        self.score = 0
+        self.message_played = False
 
 
 
